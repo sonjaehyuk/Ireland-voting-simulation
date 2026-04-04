@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ireland Voting Simulation - Documentation</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <style>
+      body {
+        background:
+          radial-gradient(circle at top right, rgba(13, 110, 253, 0.08), transparent 28%),
+          linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+      }
+
+      .readme-page {
+        max-width: 960px;
+      }
+
+      .readme-body h1,
+      .readme-body h2,
+      .readme-body h3,
+      .readme-body h4 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .readme-body pre {
+        background: #212529;
+        color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        overflow-x: auto;
+      }
+
+      .readme-body code {
+        background: rgba(108, 117, 125, 0.12);
+        padding: 0.12rem 0.35rem;
+        border-radius: 0.35rem;
+      }
+
+      .readme-body pre code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .readme-body table {
+        width: 100%;
+        margin-bottom: 1rem;
+      }
+
+      .readme-body table th,
+      .readme-body table td {
+        border: 1px solid rgba(33, 37, 41, 0.12);
+        padding: 0.5rem 0.75rem;
+      }
+    </style>
+    <script defer src="./js/readme-renderer.js"></script>
+  </head>
+  <body>
+    <main class="container py-4 py-lg-5">
+      <div class="readme-page mx-auto">
+        <header class="mb-4">
+          <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+            <div>
+              <h1 class="h2 mb-2">프로젝트 문서</h1>
+              <p class="text-muted mb-0">이 페이지는 루트의 <code>README.md</code>를 읽어 렌더링합니다.</p>
+            </div>
+            <div class="d-flex gap-2">
+              <a class="btn btn-outline-secondary" href="./index.html">시뮬레이터로 이동</a>
+              <a class="btn btn-primary" href="./README.md">README 원문 보기</a>
+            </div>
+          </div>
+        </header>
+
+        <section class="card border-0 shadow-sm">
+          <div class="card-body">
+            <div id="readme-feedback" class="alert alert-secondary d-none" role="alert"></div>
+            <article id="readme-container" class="readme-body"></article>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>
