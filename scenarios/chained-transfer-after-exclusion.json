@@ -2,11 +2,11 @@
   "name": "chained-transfer-after-exclusion",
   "seatCount": 2,
   "candidates": [
-    { "key": "A", "name": "아리아 도일", "party": "Civic Reform" },
-    { "key": "B", "name": "브렌단 킨", "party": "Labour Union" },
-    { "key": "C", "name": "케이트 번", "party": "Green Future" },
-    { "key": "D", "name": "데클런 쇼", "party": "Independent" },
-    { "key": "E", "name": "에이딘 롱", "party": "Community Voice" }
+    { "key": "A", "name": "아리아", "party": "Civic Reform" },
+    { "key": "B", "name": "브렌단", "party": "Labour Union" },
+    { "key": "C", "name": "케이트", "party": "Green Future" },
+    { "key": "D", "name": "데클런", "party": "Independent" },
+    { "key": "E", "name": "에이딘", "party": "Community Voice" }
   ],
   "ballots": [
     ["A", "C", "B", "D"],
@@ -41,25 +41,25 @@
   ],
   "expected": {
     "quota": 10,
-    "elected": ["아리아 도일", "브렌단 킨"],
+    "elected": ["아리아", "브렌단"],
     "countTypes": ["initial", "surplus", "exclusion", "exclusion"],
     "countCount": 4,
-    "excluded": ["데클런 쇼", "에이딘 롱"],
+    "excluded": ["데클런", "에이딘"],
     "countAssertions": [
       {
         "countNumber": 2,
         "actionType": "surplus",
-        "transfers": [{ "candidate": "케이트 번", "votes": 1 }]
+        "transfers": [{ "candidate": "케이트", "votes": 1 }]
       },
       {
         "countNumber": 3,
         "actionType": "exclusion",
-        "transfers": [{ "candidate": "데클런 쇼", "votes": 2 }]
+        "transfers": [{ "candidate": "데클런", "votes": 2 }]
       },
       {
         "countNumber": 4,
         "actionType": "exclusion",
-        "transfers": [{ "candidate": "브렌단 킨", "votes": 5 }]
+        "transfers": [{ "candidate": "브렌단", "votes": 5 }]
       }
     ]
   }
