@@ -230,6 +230,8 @@ const electedCandidateList = document.querySelector("#elected-candidate-list");
 const stvTallyTableBody = document.querySelector("#stv-tally-table-body");
 /** @type {HTMLTableSectionElement} */
 const stvCountHistoryBody = document.querySelector("#stv-count-history-body");
+/** @type {HTMLDivElement} */
+const stvVisualization = document.querySelector("#stv-visualization");
 
 initializeBallotForm();
 bindEvents();
@@ -832,6 +834,8 @@ function renderStvResult(result) {
     `;
     stvCountHistoryBody.appendChild(row);
   });
+
+  window.StvVisualization.render(stvVisualization, result);
 }
 
 /**
@@ -899,6 +903,7 @@ function resetStvResult() {
   stvTallyTableBody.innerHTML = "";
   stvCountHistoryBody.innerHTML = "";
   electedCandidateList.innerHTML = "";
+  stvVisualization.innerHTML = "";
 }
 
 /**
