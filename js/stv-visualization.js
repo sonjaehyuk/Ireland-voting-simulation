@@ -107,6 +107,9 @@
               <div class="border rounded-4 p-3 bg-white h-100">
                 <h5 class="h6 mb-3">요약</h5>
                 ${buildNarrativeMarkup(result, selectedCount)}
+                <div class="mt-3">
+                  ${buildBallotTraceMarkup(result, selectedCount)}
+                </div>
               </div>
             </div>
           </div>
@@ -384,6 +387,84 @@
         <div class="fw-semibold">${snapshot.votes}표</div>
         <div class="small">${renderStatusLabel(snapshot.status)}</div>
       </button>
+    `;
+  }
+
+  /**
+   * 선택된 count의 투표지 추적 마크업을 생성한다.
+   * @param {any} result 전체 결과
+   * @param {any} selectedCount 선택된 count
+   * @returns {string} 마크업 문자열
+   */
+  function buildBallotTraceMarkup(result, selectedCount) {
+    const movedBallotCount =
+      selectedCount.action.transfers.reduce((sum, transfer) => sum + (transfer.ballots?.length ?? 0), 0) +
+      (selectedCount.action.exhaustedBallots?.length ?? 0);
+
+    if (movedBallotCount === 0) {
+      return `
+        <div class="border rounded-3 p-3 bg-body-tertiary">
+          <div class="fw-semibold mb-1">투표지 추적</div>
+          <div class="small text-muted">이 count에서는 펼쳐 볼 이동 투표지가 없습니다.</div>
+        </div>
+      `;
+    }
+
+    const transferDetails = selectedCount.action.transfers
+      .filter((transfer) => Array.isArray(transfer.ballots) && transfer.ballots.length > 0)
+      .map((transfer) => {
+        const targetName = resolveCandidateNameById(transfer.candidateId, result);
+        return `
+          <details class="border rounded-3 p-2 mb-2">
+            <summary class="fw-semibold">
+              ${escapeHtml(targetName)}로 이동한 투표지 ${transfer.ballots.length}개
+            </summary>
+            <div class="vstack gap-2 mt-2">
+              ${transfer.ballots.map((ballotTrace) => buildBallotTraceCard(ballotTrace)).join("")}
+            </div>
+          </details>
+        `;
+      })
+      .join("");
+
+    const exhaustedDetails =
+      Array.isArray(selectedCount.action.exhaustedBallots) && selectedCount.action.exhaustedBallots.length > 0
+        ? `
+          <details class="border rounded-3 p-2">
+            <summary class="fw-semibold">
+              소진된 투표지 ${selectedCount.action.exhaustedBallots.length}개
+            </summary>
+            <div class="vstack gap-2 mt-2">
+              ${selectedCount.action.exhaustedBallots.map((ballotTrace) => buildBallotTraceCard(ballotTrace)).join("")}
+            </div>
+          </details>
+        `
+        : "";
+
+    return `
+      <div class="border rounded-3 p-3 bg-body-tertiary">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+          <div class="fw-semibold">투표지 추적</div>
+          <span class="badge text-bg-light border">${movedBallotCount}개</span>
+        </div>
+        <div class="small text-muted mb-2">이동 또는 소진된 투표지만 접어서 확인할 수 있습니다.</div>
+        ${transferDetails}
+        ${exhaustedDetails}
+      </div>
+    `;
+  }
+
+  /**
+   * 단일 투표지 추적 카드 마크업을 생성한다.
+   * @param {{ballotId: string, rankingText: string}} ballotTrace 투표지 추적 정보
+   * @returns {string} 마크업 문자열
+   */
+  function buildBallotTraceCard(ballotTrace) {
+    return `
+      <div class="border rounded-3 p-2 bg-white">
+        <div class="small text-muted">${escapeHtml(ballotTrace.ballotId)}</div>
+        <div class="small">${escapeHtml(ballotTrace.rankingText)}</div>
+      </div>
     `;
   }
 
