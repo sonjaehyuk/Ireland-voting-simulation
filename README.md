@@ -73,6 +73,23 @@
 }
 ```
 
+## 시나리오 샘플
+
+정적 서버로 프로젝트 루트를 열었다면 아래 경로로 브라우저에서 직접 접근할 수 있습니다.
+
+- `/scenarios/surplus-transfer-basic.json`
+  - quota를 넘긴 후보의 surplus 이양과 그 이후 count 진행을 짧게 확인하는 기본 예제
+- `/scenarios/finalisation-after-exclusion.json`
+  - exclusion 이후 남은 continuing 후보 수가 잔여 의석 수와 같아져 자동 당선으로 끝나는 예제
+- `/scenarios/exhausted-ballots.json`
+  - 다음 선호가 부족한 표가 exhausted votes로 떨어지는 흐름을 확인하는 예제
+- `/scenarios/tie-break-by-order.json`
+  - 단순 동률에서 현재 구현의 결정론적 tie-break가 어떤 순서로 작동하는지 보는 예제
+- `/scenarios/metro-three-seat-crowded.json`
+  - 3석, 8명 후보, 많은 선호 조합이 섞인 도시형 대규모 시나리오로 여러 exclusion과 늦은 당선 확정을 관찰하는 예제
+- `/scenarios/county-two-seat-messy.json`
+  - 2석, 7명 후보, 지역 선거처럼 선호가 뒤섞인 난삽한 시나리오로 반복적인 exclusion count를 관찰하는 예제
+
 ## STV 공식과 규칙
 
 ### Droop quota
@@ -221,10 +238,3 @@ node --check js/stv-visualization.js
 ```bash
 node tests/run-stv-tests.js
 ```
-
-현재 포함된 검증 시나리오:
-
-- `surplus-transfer-basic`
-- `finalisation-after-exclusion`
-- `exhausted-ballots`
-- `tie-break-by-order`
