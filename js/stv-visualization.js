@@ -93,8 +93,7 @@
             <div class="col-12 col-xl-8">
               <div class="border rounded-4 p-3 bg-white stv-flow-board">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="h6 mb-0">후보 레인과 표 이동 흐름</h5>
-                  <span class="small text-muted">같은 레인 안에서 현재 득표, 화살표로 이동 방향을 표시합니다.</span>
+                  <h5 class="h6 mb-0">표 이동 흐름</h5>
                 </div>
                 <svg class="stv-flow-svg" data-flow-svg="true" aria-hidden="true"></svg>
                 <div class="vstack gap-2 stv-lane-list" data-lane-list="true">
@@ -106,7 +105,7 @@
 
             <div class="col-12 col-xl-4">
               <div class="border rounded-4 p-3 bg-white h-100">
-                <h5 class="h6 mb-3">Parcel 스타일 요약</h5>
+                <h5 class="h6 mb-3">요약</h5>
                 ${buildNarrativeMarkup(result, selectedCount)}
               </div>
             </div>
@@ -396,12 +395,13 @@
    */
   function drawFlowArrows(container, result, selectedCount) {
     const svg = container.querySelector("[data-flow-svg]");
+    const board = container.querySelector(".stv-flow-board");
     const laneList = container.querySelector("[data-lane-list]");
-    if (!(svg instanceof SVGSVGElement) || !(laneList instanceof HTMLElement)) {
+    if (!(svg instanceof SVGSVGElement) || !(laneList instanceof HTMLElement) || !(board instanceof HTMLElement)) {
       return;
     }
 
-    const boardRect = laneList.getBoundingClientRect();
+    const boardRect = board.getBoundingClientRect();
     svg.setAttribute("viewBox", `0 0 ${Math.max(boardRect.width, 10)} ${Math.max(boardRect.height, 10)}`);
     svg.innerHTML = createSvgDefinitions();
 
@@ -477,12 +477,21 @@
    * @returns {string} SVG path 문자열
    */
   function createArrowPath(from, to, color, strokeWidth) {
-    const curveOffset = Math.max(40, Math.abs(to.x - from.x) * 0.35);
-    const controlX = from.x + curveOffset;
-    const secondControlX = to.x - curveOffset;
+    const adjustedFrom = { ...from };
+    const adjustedTo = { ...to };
+    const horizontalGap = adjustedTo.x - adjustedFrom.x;
+
+    if (Math.abs(horizontalGap) < 24) {
+      adjustedFrom.x += 18;
+      adjustedTo.x += 18;
+    }
+
+    const curveOffset = Math.max(40, Math.abs(adjustedTo.x - adjustedFrom.x) * 0.35);
+    const controlX = adjustedFrom.x + curveOffset;
+    const secondControlX = adjustedTo.x - curveOffset;
     return `
       <path
-        d="M ${from.x} ${from.y} C ${controlX} ${from.y}, ${secondControlX} ${to.y}, ${to.x} ${to.y}"
+        d="M ${adjustedFrom.x} ${adjustedFrom.y} C ${controlX} ${adjustedFrom.y}, ${secondControlX} ${adjustedTo.y}, ${adjustedTo.x} ${adjustedTo.y}"
         fill="none"
         stroke="${color}"
         stroke-width="${strokeWidth}"
