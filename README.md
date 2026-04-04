@@ -89,6 +89,8 @@
   - 3석, 8명 후보, 많은 선호 조합이 섞인 도시형 대규모 시나리오로 여러 exclusion과 늦은 당선 확정을 관찰하는 예제
 - `/scenarios/county-two-seat-messy.json`
   - 2석, 7명 후보, 지역 선거처럼 선호가 뒤섞인 난삽한 시나리오로 반복적인 exclusion count를 관찰하는 예제
+- `/scenarios/chained-transfer-after-exclusion.json`
+  - 한 번 이동한 표가 나중에 탈락한 후보를 거쳐 다시 다음 선호 후보로 재이양되는 연쇄 이동 흐름을 보는 예제
 
 ## STV 공식과 규칙
 
