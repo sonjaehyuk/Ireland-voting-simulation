@@ -51,9 +51,16 @@
  */
 
 /**
+ * @typedef {Object} CountBallotTrace
+ * @property {string} ballotId 투표지 ID
+ * @property {string} rankingText 전체 선호도 표시 문자열
+ */
+
+/**
  * @typedef {Object} CountTransfer
  * @property {string} candidateId 표를 받은 후보 ID
  * @property {number} votes 이양된 표 수
+ * @property {CountBallotTrace[]} ballots 이양된 투표지 추적 정보
  */
 
 /**
@@ -65,6 +72,7 @@
  * @property {number} exhaustedVotes 소진표 수
  * @property {number} surplus 잉여표 수
  * @property {CountTransfer[]} transfers 후보별 이양 내역
+ * @property {CountBallotTrace[]} exhaustedBallots 소진된 투표지 추적 정보
  */
 
 /**
@@ -174,7 +182,8 @@ function runStvElection(ballots, candidates, seatCount) {
         transferredVotes: 0,
         exhaustedVotes: invalidBallots,
         surplus: 0,
-        transfers: []
+        transfers: [],
+        exhaustedBallots: []
       },
       candidates,
       candidateStatuses,
@@ -214,7 +223,8 @@ function runStvElection(ballots, candidates, seatCount) {
             transferredVotes: 0,
             exhaustedVotes: 0,
             surplus: 0,
-            transfers: []
+            transfers: [],
+            exhaustedBallots: []
           },
           candidates,
           candidateStatuses,
@@ -645,7 +655,8 @@ function transferSurplus(
       transferredVotes: 0,
       exhaustedVotes: 0,
       surplus,
-      transfers: []
+      transfers: [],
+      exhaustedBallots: []
     };
   }
 
@@ -677,6 +688,7 @@ function transferSurplus(
 
   const candidateVotes = candidateBallots.get(candidateId) ?? [];
   let exhaustedVotes = 0;
+  const exhaustedBallotTraces = [];
   const excessNonTransferable = Math.max(0, candidateVotes.length - droopQuota);
   if (excessNonTransferable > 0) {
     const removableBallotIds = [...nonTransferableBallotIds].sort().slice(0, excessNonTransferable);
@@ -686,6 +698,7 @@ function transferSurplus(
       if (ballotState) {
         ballotState.currentCandidateId = null;
         ballotState.exhausted = true;
+        exhaustedBallotTraces.push(createBallotTrace(ballotState, candidateMap));
       }
     });
     exhaustedVotes = removableBallotIds.length;
@@ -700,8 +713,13 @@ function transferSurplus(
     surplus,
     transfers: transfers.map((transfer) => ({
       candidateId: transfer.candidateId,
-      votes: transfer.ballotIds.length
-    }))
+      votes: transfer.ballotIds.length,
+      ballots: transfer.ballotIds
+        .map((ballotId) => ballotStateMap.get(ballotId))
+        .filter(Boolean)
+        .map((ballotState) => createBallotTrace(ballotState, candidateMap))
+    })),
+    exhaustedBallots: exhaustedBallotTraces
   };
 }
 
@@ -853,6 +871,7 @@ function excludeCandidate(
   const ballotIds = [...(candidateBallots.get(candidateId) ?? [])].sort();
   const transferGroups = new Map();
   let exhaustedVotes = 0;
+  const exhaustedBallotTraces = [];
 
   ballotIds.forEach((ballotId) => {
     const ballotState = ballotStateMap.get(ballotId);
@@ -867,6 +886,7 @@ function excludeCandidate(
       ballotState.currentCandidateId = null;
       ballotState.exhausted = true;
       exhaustedVotes += 1;
+      exhaustedBallotTraces.push(createBallotTrace(ballotState, candidateMap));
       return;
     }
 
@@ -898,8 +918,32 @@ function excludeCandidate(
     surplus: 0,
     transfers: Array.from(transferGroups.entries()).map(([recipientId, recipientBallotIds]) => ({
       candidateId: recipientId,
-      votes: recipientBallotIds.length
-    }))
+      votes: recipientBallotIds.length,
+      ballots: recipientBallotIds
+        .map((ballotId) => ballotStateMap.get(ballotId))
+        .filter(Boolean)
+        .map((ballotState) => createBallotTrace(ballotState, candidateMap))
+    })),
+    exhaustedBallots: exhaustedBallotTraces
+  };
+}
+
+/**
+ * 투표지 추적 정보를 생성한다.
+ * @param {BallotState} ballotState 투표지 상태
+ * @param {Map<string, Candidate>} candidateMap 후보 맵
+ * @returns {CountBallotTrace} 추적 정보
+ */
+function createBallotTrace(ballotState, candidateMap) {
+  return {
+    ballotId: ballotState.id,
+    rankingText: ballotState.preferences
+      .map((preference) => {
+        const candidate = candidateMap.get(preference.candidateId);
+        const candidateLabel = candidate ? `${candidate.name}` : preference.candidateId;
+        return `${preference.rank}순위 ${candidateLabel}`;
+      })
+      .join(" > ")
   };
 }
 
