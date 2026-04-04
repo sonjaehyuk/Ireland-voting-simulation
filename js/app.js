@@ -18,25 +18,6 @@
  */
 
 /**
- * @typedef {Object} CandidateTally
- * @property {Candidate} candidate 후보 정보
- * @property {number} votes 득표수
- * @property {boolean} reachedQuota quota 이상 여부
- * @property {boolean} exceededQuota quota 초과 여부
- */
-
-/**
- * @typedef {Object} StvRoundResult
- * @property {number} seatCount 선출 의석 수
- * @property {number} totalBallots 총 투표지 수
- * @property {number} validBallots 유효 투표지 수
- * @property {number} invalidBallots 무효 투표지 수
- * @property {number} droopQuota Droop quota 값
- * @property {CandidateTally[]} tallies 후보별 득표 결과
- * @property {CandidateTally[]} quotaCandidates quota 이상 후보 목록
- */
-
-/**
  * 후보를 생성/삭제/조회한다.
  */
 class CandidateManager {
@@ -222,9 +203,11 @@ const summaryInvalidBallots = document.querySelector("#summary-invalid-ballots")
 /** @type {HTMLStrongElement} */
 const summaryQuota = document.querySelector("#summary-quota");
 /** @type {HTMLUListElement} */
-const quotaCandidateList = document.querySelector("#quota-candidate-list");
+const electedCandidateList = document.querySelector("#elected-candidate-list");
 /** @type {HTMLTableSectionElement} */
 const stvTallyTableBody = document.querySelector("#stv-tally-table-body");
+/** @type {HTMLTableSectionElement} */
+const stvCountHistoryBody = document.querySelector("#stv-count-history-body");
 
 initializeBallotForm();
 bindEvents();
@@ -344,7 +327,11 @@ function bindEvents() {
 
     try {
       const seatCount = Number(seatCountInput.value);
-      const result = runStvFirstRound(ballotManager.getBallots(), candidateManager.getCandidates(), seatCount);
+      const result = window.StvEngine.runStvElection(
+        ballotManager.getBallots(),
+        candidateManager.getCandidates(),
+        seatCount
+      );
       hideStvError();
       renderStvResult(result);
     } catch (error) {
@@ -495,15 +482,10 @@ function collectPreferencesFromForm() {
 
 /**
  * 선호도 규칙을 검증한다.
- * - 1순위는 필수
- * - 순위는 1부터 시작
- * - 순위는 빈틈 없이 연속 증가
- * - 동일 후보를 중복 선택할 수 없음
- * - 선택한 후보는 후보 목록에 존재해야 함
  * @param {Preference[]} preferences 검증 대상 선호도 목록
- * @param {CandidateManager} candidateManager 후보 관리자
+ * @param {CandidateManager} manager 후보 관리자
  */
-function validatePreferences(preferences, candidateManager) {
+function validatePreferences(preferences, manager) {
   if (!Array.isArray(preferences) || preferences.length === 0) {
     throw new Error("최소 1개의 선호도(1순위)를 입력해야 합니다.");
   }
@@ -525,15 +507,14 @@ function validatePreferences(preferences, candidateManager) {
       throw new Error("동일 후보를 한 투표지에서 중복 선택할 수 없습니다.");
     }
 
-    if (!candidateManager.getCandidateById(preference.candidateId)) {
+    if (!manager.getCandidateById(preference.candidateId)) {
       throw new Error("선택한 후보가 후보 목록에 존재하지 않습니다.");
     }
 
     rankSet.add(preference.rank);
     candidateSet.add(preference.candidateId);
 
-    const expectedRank = index + 1;
-    if (preference.rank !== expectedRank) {
+    if (preference.rank !== index + 1) {
       throw new Error("순위는 1부터 시작해 연속으로 입력되어야 합니다.");
     }
   });
@@ -541,166 +522,6 @@ function validatePreferences(preferences, candidateManager) {
   if (sorted[0].rank !== 1) {
     throw new Error("1순위 입력은 필수입니다.");
   }
-}
-
-/**
- * STV 1라운드(1순위 집계)를 수행한다.
- * @param {BallotPaper[]} ballots 투표지 목록
- * @param {Candidate[]} candidates 후보 목록
- * @param {number} seatCount 선출 의석 수
- * @returns {StvRoundResult} 집계 결과
- */
-function runStvFirstRound(ballots, candidates, seatCount) {
-  if (!Array.isArray(candidates) || candidates.length === 0) {
-    throw new Error("집계를 위해 최소 1명 이상의 후보가 필요합니다.");
-  }
-
-  if (!Array.isArray(ballots) || ballots.length === 0) {
-    throw new Error("집계를 위해 최소 1개의 투표지가 필요합니다.");
-  }
-
-  validateSeatCount(seatCount, candidates.length);
-
-  const candidateMap = new Map(candidates.map((candidate) => [candidate.id, candidate]));
-  const continuingCandidateIds = new Set(candidates.map((candidate) => candidate.id));
-  const tallyMap = new Map(candidates.map((candidate) => [candidate.id, 0]));
-
-  let invalidBallots = 0;
-
-  ballots.forEach((ballot) => {
-    validateBallotPaper(ballot, candidateMap);
-
-    const topPreference = findHighestContinuingPreference(ballot, continuingCandidateIds);
-    if (!topPreference) {
-      invalidBallots += 1;
-      return;
-    }
-
-    const previousVotes = tallyMap.get(topPreference.candidateId) ?? 0;
-    tallyMap.set(topPreference.candidateId, previousVotes + 1);
-  });
-
-  const validBallots = ballots.length - invalidBallots;
-  if (validBallots <= 0) {
-    throw new Error("유효표가 없어 Droop quota를 계산할 수 없습니다.");
-  }
-
-  const droopQuota = calculateDroopQuota(validBallots, seatCount);
-
-  /** @type {CandidateTally[]} */
-  const tallies = candidates
-    .map((candidate) => {
-      const votes = tallyMap.get(candidate.id) ?? 0;
-      return {
-        candidate,
-        votes,
-        reachedQuota: votes >= droopQuota,
-        exceededQuota: votes > droopQuota
-      };
-    })
-    .sort((a, b) => b.votes - a.votes || a.candidate.name.localeCompare(b.candidate.name, "ko"));
-
-  const quotaCandidates = tallies.filter((tally) => tally.reachedQuota);
-
-  return {
-    seatCount,
-    totalBallots: ballots.length,
-    validBallots,
-    invalidBallots,
-    droopQuota,
-    tallies,
-    quotaCandidates
-  };
-}
-
-/**
- * 의석 수 입력값을 검증한다.
- * @param {number} seatCount 입력 의석 수
- * @param {number} candidateCount 후보 수
- */
-function validateSeatCount(seatCount, candidateCount) {
-  if (!Number.isInteger(seatCount) || seatCount < 1) {
-    throw new Error("의석 수는 1 이상의 정수여야 합니다.");
-  }
-
-  if (seatCount > candidateCount) {
-    throw new Error("의석 수는 후보 수보다 클 수 없습니다.");
-  }
-}
-
-/**
- * 단일 투표지의 구조를 검증한다.
- * @param {BallotPaper} ballot 검증할 투표지
- * @param {Map<string, Candidate>} candidateMap 후보 맵
- */
-function validateBallotPaper(ballot, candidateMap) {
-  if (!ballot || !Array.isArray(ballot.preferences) || ballot.preferences.length === 0) {
-    throw new Error("비어 있는 투표지가 존재합니다.");
-  }
-
-  const sorted = [...ballot.preferences].sort((a, b) => a.rank - b.rank);
-  const rankSet = new Set();
-  const candidateSet = new Set();
-
-  sorted.forEach((preference, index) => {
-    if (!Number.isInteger(preference.rank) || preference.rank < 1) {
-      throw new Error(`투표지 ${ballot.id}에 잘못된 순위가 있습니다.`);
-    }
-
-    if (rankSet.has(preference.rank)) {
-      throw new Error(`투표지 ${ballot.id}에 중복 순위가 있습니다.`);
-    }
-
-    if (candidateSet.has(preference.candidateId)) {
-      throw new Error(`투표지 ${ballot.id}에 중복 후보가 있습니다.`);
-    }
-
-    if (!candidateMap.has(preference.candidateId)) {
-      throw new Error(`투표지 ${ballot.id}에 존재하지 않는 후보가 포함되어 있습니다.`);
-    }
-
-    const expectedRank = index + 1;
-    if (preference.rank !== expectedRank) {
-      throw new Error(`투표지 ${ballot.id}의 순위가 1부터 연속이 아닙니다.`);
-    }
-
-    rankSet.add(preference.rank);
-    candidateSet.add(preference.candidateId);
-  });
-
-  if (sorted[0].rank !== 1) {
-    throw new Error(`투표지 ${ballot.id}는 1순위가 필수입니다.`);
-  }
-}
-
-/**
- * 투표지에서 현재 계속 후보군에 속한 최상위 선호를 찾는다.
- * @param {BallotPaper} ballot 투표지
- * @param {Set<string>} continuingCandidateIds 계속 후보군 ID 집합
- * @returns {Preference | undefined} 최상위 선호
- */
-function findHighestContinuingPreference(ballot, continuingCandidateIds) {
-  return [...ballot.preferences]
-    .sort((a, b) => a.rank - b.rank)
-    .find((preference) => continuingCandidateIds.has(preference.candidateId));
-}
-
-/**
- * Droop quota를 계산한다.
- * @param {number} validBallots 유효표 수
- * @param {number} seatCount 선출 의석 수
- * @returns {number} quota 값
- */
-function calculateDroopQuota(validBallots, seatCount) {
-  if (!Number.isInteger(validBallots) || validBallots <= 0) {
-    throw new Error("유효표 수는 1 이상이어야 합니다.");
-  }
-
-  if (!Number.isInteger(seatCount) || seatCount <= 0) {
-    throw new Error("의석 수는 1 이상이어야 합니다.");
-  }
-
-  return Math.floor(validBallots / (seatCount + 1)) + 1;
 }
 
 /**
@@ -789,7 +610,7 @@ function renderBallotList() {
 
 /**
  * STV 집계 결과를 화면에 렌더링한다.
- * @param {StvRoundResult} result 집계 결과
+ * @param {import("./stv-engine.js").StvElectionResult | any} result 집계 결과
  */
 function renderStvResult(result) {
   stvResultContainer.classList.remove("d-none");
@@ -799,31 +620,98 @@ function renderStvResult(result) {
   summaryInvalidBallots.textContent = String(result.invalidBallots);
   summaryQuota.textContent = String(result.droopQuota);
 
-  quotaCandidateList.innerHTML = "";
-  if (result.quotaCandidates.length === 0) {
+  electedCandidateList.innerHTML = "";
+  if (result.electedCandidates.length === 0) {
     const item = document.createElement("li");
-    item.textContent = "이번 라운드에서 quota 이상 후보가 없습니다.";
-    quotaCandidateList.appendChild(item);
+    item.textContent = "아직 당선자가 확정되지 않았습니다.";
+    electedCandidateList.appendChild(item);
   } else {
-    result.quotaCandidates.forEach((tally) => {
+    result.electedCandidates.forEach((candidate, index) => {
       const item = document.createElement("li");
-      const status = tally.exceededQuota ? "quota 초과" : "quota 정확히 충족";
-      item.textContent = `${tally.candidate.name} (${tally.candidate.party}) - ${tally.votes}표 (${status})`;
-      quotaCandidateList.appendChild(item);
+      item.textContent = `${index + 1}. ${candidate.name} (${candidate.party})`;
+      electedCandidateList.appendChild(item);
     });
   }
 
   stvTallyTableBody.innerHTML = "";
-  result.tallies.forEach((tally) => {
+  result.finalTallies.forEach((tally) => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${escapeHtml(tally.candidate.name)}</td>
       <td>${escapeHtml(tally.candidate.party)}</td>
       <td>${tally.votes}</td>
-      <td>${tally.reachedQuota ? "통과" : "미달"}${tally.exceededQuota ? " (초과)" : ""}</td>
+      <td>${renderCandidateStatusText(tally)}</td>
     `;
     stvTallyTableBody.appendChild(row);
   });
+
+  stvCountHistoryBody.innerHTML = "";
+  result.counts.forEach((count) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${count.countNumber}</td>
+      <td>${escapeHtml(count.action.description)}</td>
+      <td>${escapeHtml(formatTransferSummary(count, candidateManager))}</td>
+      <td>${escapeHtml(formatCandidateNames(count.newlyElected))}</td>
+    `;
+    stvCountHistoryBody.appendChild(row);
+  });
+}
+
+/**
+ * 후보 상태 텍스트를 렌더링한다.
+ * @param {{status: string, reachedQuota: boolean, exceededQuota: boolean}} tally 후보 집계 정보
+ * @returns {string} 상태 문자열
+ */
+function renderCandidateStatusText(tally) {
+  if (tally.status === "elected") {
+    return tally.exceededQuota ? "당선 (quota 초과)" : "당선";
+  }
+
+  if (tally.status === "excluded") {
+    return "탈락";
+  }
+
+  return tally.reachedQuota ? "quota 도달" : "계속";
+}
+
+/**
+ * count별 표 이동 요약 문자열을 생성한다.
+ * @param {any} count count 정보
+ * @param {CandidateManager} manager 후보 관리자
+ * @returns {string} 요약 문자열
+ */
+function formatTransferSummary(count, manager) {
+  if (!count.action.transfers || count.action.transfers.length === 0) {
+    return count.action.exhaustedVotes > 0 ? `소진 ${count.action.exhaustedVotes}표` : "-";
+  }
+
+  const transferText = count.action.transfers
+    .map((transfer) => {
+      const candidate = manager.getCandidateById(transfer.candidateId);
+      const candidateName = candidate ? `${candidate.name}` : transfer.candidateId;
+      return `${candidateName} ${transfer.votes}표`;
+    })
+    .join(", ");
+
+  if (count.action.exhaustedVotes > 0) {
+    return `${transferText}, 소진 ${count.action.exhaustedVotes}표`;
+  }
+
+  return transferText;
+}
+
+/**
+ * 후보 이름 목록을 문자열로 변환한다.
+ * @param {Candidate[]} candidates 후보 목록
+ * @returns {string} 이름 문자열
+ */
+function formatCandidateNames(candidates) {
+  if (!Array.isArray(candidates) || candidates.length === 0) {
+    return "-";
+  }
+
+  return candidates.map((candidate) => `${candidate.name} (${candidate.party})`).join(", ");
 }
 
 /**
@@ -833,7 +721,8 @@ function resetStvResult() {
   stvResultContainer.classList.add("d-none");
   hideStvError();
   stvTallyTableBody.innerHTML = "";
-  quotaCandidateList.innerHTML = "";
+  stvCountHistoryBody.innerHTML = "";
+  electedCandidateList.innerHTML = "";
 }
 
 /**
