@@ -89,6 +89,14 @@ class CandidateManager {
   getCandidates() {
     return Array.from(this.candidates.values());
   }
+
+  /**
+   * 전체 후보를 초기화한다.
+   */
+  reset() {
+    this.candidates.clear();
+    this.sequence = 1;
+  }
 }
 
 /**
@@ -151,6 +159,14 @@ class BallotManager {
       ballot.preferences.some((preference) => preference.candidateId === candidateId)
     );
   }
+
+  /**
+   * 전체 투표지를 초기화한다.
+   */
+  reset() {
+    this.ballots.clear();
+    this.sequence = 1;
+  }
 }
 
 /** @type {CandidateManager} */
@@ -177,6 +193,12 @@ const ballotForm = document.querySelector("#ballot-form");
 const preferenceList = document.querySelector("#preference-list");
 /** @type {HTMLButtonElement} */
 const addPreferenceButton = document.querySelector("#add-preference");
+/** @type {HTMLInputElement} */
+const bulkScenarioFileInput = document.querySelector("#bulk-scenario-file");
+/** @type {HTMLButtonElement} */
+const bulkImportButton = document.querySelector("#bulk-import-button");
+/** @type {HTMLDivElement} */
+const bulkImportFeedback = document.querySelector("#bulk-import-feedback");
 /** @type {HTMLDivElement} */
 const ballotFeedback = document.querySelector("#ballot-feedback");
 /** @type {HTMLTableSectionElement} */
@@ -275,6 +297,24 @@ function bindEvents() {
     updateAddPreferenceButtonState();
   });
 
+  bulkImportButton.addEventListener("click", async () => {
+    try {
+      const file = bulkScenarioFileInput.files?.[0];
+      if (!file) {
+        throw new Error("불러올 JSON 파일을 먼저 선택해야 합니다.");
+      }
+
+      const text = await file.text();
+      const scenario = parseScenarioFile(text);
+      applyScenarioToManagers(scenario);
+      showBulkImportSuccess(
+        `${scenario.name} 시나리오를 불러왔습니다. 후보 ${scenario.candidates.length}명, 투표지 ${scenario.ballots.length}개`
+      );
+    } catch (error) {
+      showBulkImportError(error instanceof Error ? error.message : "시나리오 파일을 불러올 수 없습니다.");
+    }
+  });
+
   preferenceList.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
@@ -299,6 +339,7 @@ function bindEvents() {
       ballotManager.createBallot(preferences, candidateManager);
       initializeBallotForm();
       hideBallotError();
+      hideBulkImportFeedback();
       renderBallotList();
       resetStvResult();
     } catch (error) {
@@ -316,6 +357,7 @@ function bindEvents() {
       const ballotId = target.getAttribute("data-delete-ballot");
       if (ballotId) {
         ballotManager.deleteBallot(ballotId);
+        hideBulkImportFeedback();
         renderBallotList();
         resetStvResult();
       }
@@ -525,6 +567,140 @@ function validatePreferences(preferences, manager) {
 }
 
 /**
+ * 시나리오 JSON 문자열을 파싱하고 검증한다.
+ * @param {string} fileText 파일 문자열
+ * @returns {{name: string, seatCount: number | null, candidates: Array<{key: string, name: string, party: string}>, ballots: Array<Array<string>>}} 파싱 결과
+ */
+function parseScenarioFile(fileText) {
+  let parsed;
+
+  try {
+    parsed = JSON.parse(fileText);
+  } catch (error) {
+    throw new Error("JSON 파싱에 실패했습니다. 파일 형식을 확인해 주세요.");
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("시나리오 파일의 최상위 구조는 객체여야 합니다.");
+  }
+
+  const name = typeof parsed.name === "string" && parsed.name.trim() ? parsed.name.trim() : "이름 없는 시나리오";
+  const seatCount = parsed.seatCount === undefined ? null : Number(parsed.seatCount);
+
+  if (seatCount !== null && (!Number.isInteger(seatCount) || seatCount < 1)) {
+    throw new Error("seatCount는 1 이상의 정수여야 합니다.");
+  }
+
+  if (!Array.isArray(parsed.candidates) || parsed.candidates.length === 0) {
+    throw new Error("candidates 배열에 최소 1명 이상의 후보가 필요합니다.");
+  }
+
+  if (!Array.isArray(parsed.ballots) || parsed.ballots.length === 0) {
+    throw new Error("ballots 배열에 최소 1개 이상의 투표지가 필요합니다.");
+  }
+
+  const candidates = parsed.candidates.map((candidate, index) => {
+    if (!candidate || typeof candidate !== "object") {
+      throw new Error(`candidates[${index}]는 객체여야 합니다.`);
+    }
+
+    const key = typeof candidate.key === "string" ? candidate.key.trim() : "";
+    const nameValue = typeof candidate.name === "string" ? candidate.name.trim() : "";
+    const partyValue = typeof candidate.party === "string" ? candidate.party.trim() : "";
+
+    if (!key || !nameValue || !partyValue) {
+      throw new Error(`candidates[${index}]에는 key, name, party가 모두 필요합니다.`);
+    }
+
+    return {
+      key,
+      name: nameValue,
+      party: partyValue
+    };
+  });
+
+  const candidateKeySet = new Set();
+  candidates.forEach((candidate) => {
+    if (candidateKeySet.has(candidate.key)) {
+      throw new Error(`후보 key '${candidate.key}'가 중복되었습니다.`);
+    }
+    candidateKeySet.add(candidate.key);
+  });
+
+  const ballots = parsed.ballots.map((ballot, ballotIndex) => {
+    if (!Array.isArray(ballot) || ballot.length === 0) {
+      throw new Error(`ballots[${ballotIndex}]는 최소 1개 이상의 후보 key를 포함한 배열이어야 합니다.`);
+    }
+
+    const normalizedBallot = ballot.map((candidateKey, preferenceIndex) => {
+      if (typeof candidateKey !== "string" || !candidateKey.trim()) {
+        throw new Error(`ballots[${ballotIndex}][${preferenceIndex}]는 후보 key 문자열이어야 합니다.`);
+      }
+      return candidateKey.trim();
+    });
+
+    const duplicated = new Set();
+    normalizedBallot.forEach((candidateKey) => {
+      if (!candidateKeySet.has(candidateKey)) {
+        throw new Error(`ballots[${ballotIndex}]에 등록되지 않은 후보 key '${candidateKey}'가 있습니다.`);
+      }
+
+      if (duplicated.has(candidateKey)) {
+        throw new Error(`ballots[${ballotIndex}]에 후보 key '${candidateKey}'가 중복되었습니다.`);
+      }
+
+      duplicated.add(candidateKey);
+    });
+
+    return normalizedBallot;
+  });
+
+  return {
+    name,
+    seatCount,
+    candidates,
+    ballots
+  };
+}
+
+/**
+ * 시나리오 데이터를 화면 상태에 반영한다.
+ * @param {{name: string, seatCount: number | null, candidates: Array<{key: string, name: string, party: string}>, ballots: Array<Array<string>>}} scenario 시나리오 데이터
+ */
+function applyScenarioToManagers(scenario) {
+  candidateManager.reset();
+  ballotManager.reset();
+
+  const candidateIdByKey = new Map();
+  scenario.candidates.forEach((candidate) => {
+    const createdCandidate = candidateManager.createCandidate(candidate.name, candidate.party);
+    candidateIdByKey.set(candidate.key, createdCandidate.id);
+  });
+
+  scenario.ballots.forEach((ballotKeys) => {
+    ballotManager.createBallot(
+      ballotKeys.map((candidateKey, index) => ({
+        rank: index + 1,
+        candidateId: candidateIdByKey.get(candidateKey)
+      })),
+      candidateManager
+    );
+  });
+
+  if (scenario.seatCount !== null) {
+    seatCountInput.value = String(scenario.seatCount);
+  }
+
+  initializeBallotForm();
+  hideCandidateError();
+  hideBallotError();
+  renderCandidateList();
+  refreshPreferenceCandidateOptions();
+  renderBallotList();
+  resetStvResult();
+}
+
+/**
  * 후보 목록을 화면에 렌더링한다.
  */
 function renderCandidateList() {
@@ -723,6 +899,35 @@ function resetStvResult() {
   stvTallyTableBody.innerHTML = "";
   stvCountHistoryBody.innerHTML = "";
   electedCandidateList.innerHTML = "";
+}
+
+/**
+ * 벌크 업로드 성공 메시지를 표시한다.
+ * @param {string} message 성공 메시지
+ */
+function showBulkImportSuccess(message) {
+  bulkImportFeedback.textContent = message;
+  bulkImportFeedback.classList.remove("d-none", "alert-danger");
+  bulkImportFeedback.classList.add("alert-success");
+}
+
+/**
+ * 벌크 업로드 오류 메시지를 표시한다.
+ * @param {string} message 오류 메시지
+ */
+function showBulkImportError(message) {
+  bulkImportFeedback.textContent = message;
+  bulkImportFeedback.classList.remove("d-none", "alert-success");
+  bulkImportFeedback.classList.add("alert-danger");
+}
+
+/**
+ * 벌크 업로드 메시지를 숨긴다.
+ */
+function hideBulkImportFeedback() {
+  bulkImportFeedback.textContent = "";
+  bulkImportFeedback.classList.add("d-none");
+  bulkImportFeedback.classList.remove("alert-success", "alert-danger");
 }
 
 /**

@@ -1,0 +1,35 @@
+{
+  "name": "exhausted-ballots",
+  "seatCount": 2,
+  "candidates": [
+    { "key": "A", "name": "A 후보", "party": "P1" },
+    { "key": "B", "name": "B 후보", "party": "P2" },
+    { "key": "C", "name": "C 후보", "party": "P3" },
+    { "key": "D", "name": "D 후보", "party": "P4" }
+  ],
+  "ballots": [
+    ["A"],
+    ["A"],
+    ["B"],
+    ["C"],
+    ["D"]
+  ],
+  "expected": {
+    "quota": 2,
+    "elected": ["A 후보", "D 후보"],
+    "countTypes": ["initial", "exclusion", "exclusion", "finalisation"],
+    "countCount": 4,
+    "countAssertions": [
+      {
+        "countNumber": 2,
+        "actionType": "exclusion",
+        "exhaustedVotes": 1
+      },
+      {
+        "countNumber": 3,
+        "actionType": "exclusion",
+        "exhaustedVotes": 1
+      }
+    ]
+  }
+}

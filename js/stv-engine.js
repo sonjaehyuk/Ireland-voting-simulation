@@ -251,8 +251,7 @@ function runStvElection(ballots, candidates, seatCount) {
         ballotStateMap,
         droopQuota,
         candidateMap,
-        processedSurplusKeys,
-        candidateParcels
+        processedSurplusKeys
       );
 
       const newlyElected = markReachedQuotaCandidates(
@@ -1162,6 +1161,14 @@ function calculateDroopQuota(validBallots, seatCount) {
   return Math.floor(validBallots / (seatCount + 1)) + 1;
 }
 
-window.StvEngine = {
-  runStvElection
-};
+if (typeof window !== "undefined") {
+  window.StvEngine = {
+    runStvElection
+  };
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    runStvElection
+  };
+}
