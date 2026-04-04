@@ -1,0 +1,32 @@
+{
+  "name": "surplus-transfer-basic",
+  "seatCount": 2,
+  "candidates": [
+    { "key": "A", "name": "A 후보", "party": "P1" },
+    { "key": "B", "name": "B 후보", "party": "P2" },
+    { "key": "C", "name": "C 후보", "party": "P3" },
+    { "key": "D", "name": "D 후보", "party": "P4" }
+  ],
+  "ballots": [
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "C"],
+    ["B", "C"],
+    ["C", "B"],
+    ["D", "B"]
+  ],
+  "expected": {
+    "quota": 3,
+    "elected": ["A 후보", "B 후보"],
+    "countTypes": ["initial", "surplus", "exclusion"],
+    "countCount": 3,
+    "countAssertions": [
+      {
+        "countNumber": 2,
+        "actionType": "surplus",
+        "transfers": [{ "candidate": "B 후보", "votes": 1 }]
+      }
+    ]
+  }
+}

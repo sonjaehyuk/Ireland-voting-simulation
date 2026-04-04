@@ -1,0 +1,21 @@
+{
+  "name": "finalisation-after-exclusion",
+  "seatCount": 2,
+  "candidates": [
+    { "key": "A", "name": "A 후보", "party": "P1" },
+    { "key": "B", "name": "B 후보", "party": "P2" },
+    { "key": "C", "name": "C 후보", "party": "P3" }
+  ],
+  "ballots": [
+    ["A"],
+    ["B"],
+    ["C"]
+  ],
+  "expected": {
+    "quota": 2,
+    "elected": ["B 후보", "C 후보"],
+    "countTypes": ["initial", "exclusion", "finalisation"],
+    "countCount": 3,
+    "excluded": ["A 후보"]
+  }
+}
