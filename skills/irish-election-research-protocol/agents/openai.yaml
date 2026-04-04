@@ -1,0 +1,4 @@
+interface:
+  display_name: "Irish Election Research Protocol"
+  short_description: "권위 있는 아일랜드 선거 자료를 검증 규율에 따라 검색·기록한다"
+  default_prompt: "아일랜드 선거 관련 사실을 조사할 때 권위 있는 출처를 단계적으로 확인하고 기록해줘."
