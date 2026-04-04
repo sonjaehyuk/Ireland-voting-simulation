@@ -88,6 +88,8 @@
 
 - `/scenarios/surplus-transfer-basic.json`
   - quota를 넘긴 후보의 surplus 이양과 그 이후 count 진행을 짧게 확인하는 기본 예제
+- `/scenarios/large-surplus-changes-runner-up.json`
+  - (**추천**) A가 매우 큰 surplus를 가진 상태에서 B와 C가 모두 이양을 받지만, 원래 뒤처져 있던 B가 역전 당선하는 예제
 - `/scenarios/finalisation-after-exclusion.json`
   - exclusion 이후 남은 continuing 후보 수가 잔여 의석 수와 같아져 자동 당선으로 끝나는 예제
 - `/scenarios/exhausted-ballots.json`

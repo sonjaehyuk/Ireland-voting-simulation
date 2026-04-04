@@ -1,0 +1,43 @@
+{
+  "name": "large-surplus-changes-runner-up",
+  "seatCount": 2,
+  "candidates": [
+    { "key": "A", "name": "A 후보", "party": "P1" },
+    { "key": "B", "name": "B 후보", "party": "P2" },
+    { "key": "C", "name": "C 후보", "party": "P3" }
+  ],
+  "ballots": [
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "C"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "B"],
+    ["A", "C"],
+    ["B"],
+    ["C"],
+    ["C"],
+    ["C"]
+  ],
+  "expected": {
+    "quota": 6,
+    "elected": ["A 후보", "B 후보"],
+    "countTypes": ["initial", "surplus"],
+    "countCount": 2,
+    "countAssertions": [
+      {
+        "countNumber": 2,
+        "actionType": "surplus",
+        "transfers": [
+          { "candidate": "B 후보", "votes": 5 },
+          { "candidate": "C 후보", "votes": 1 }
+        ]
+      }
+    ]
+  }
+}
