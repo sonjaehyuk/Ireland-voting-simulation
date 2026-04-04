@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ireland Voting Simulation - Ballot Foundation</title>
+    <title>Ireland Voting Simulation - STV Foundation</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -19,53 +19,140 @@
     <script defer src="./js/ballot-manager.js"></script>
   </head>
   <body class="bg-light">
-    <main class="container py-4">
-      <section class="card shadow-sm mb-4">
-        <div class="card-body">
-          <h1 class="h3 mb-3">투표지 생성</h1>
-          <p class="text-muted mb-4">
-            1순위는 필수이며, 순위는 1부터 연속되어야 합니다.
-          </p>
+    <main class="container py-4 py-lg-5">
+      <header class="mb-4">
+        <h1 class="h2 mb-2">아일랜드 STV 시뮬레이션 (기초 단계)</h1>
+        <p class="text-muted mb-0">후보 등록, 투표지 생성, Droop quota 기반 1라운드 집계를 수행합니다.</p>
+      </header>
 
-          <form id="ballot-form" novalidate>
-            <div id="preference-list" class="vstack gap-2 mb-3"></div>
-            <div class="d-flex gap-2">
-              <button type="button" id="add-preference" class="btn btn-outline-secondary">
-                선호도 추가
-              </button>
-              <button type="submit" class="btn btn-primary">투표지 생성</button>
+      <div class="row g-4">
+        <div class="col-12 col-lg-4">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4 mb-3">후보 관리</h2>
+              <form id="candidate-form" class="vstack gap-2" novalidate>
+                <div>
+                  <label for="candidate-name" class="form-label mb-1">후보 이름</label>
+                  <input id="candidate-name" class="form-control" type="text" placeholder="예: Siobhan Murphy" required />
+                </div>
+                <div>
+                  <label for="candidate-party" class="form-label mb-1">정당</label>
+                  <input id="candidate-party" class="form-control" type="text" placeholder="예: Green Party" required />
+                </div>
+                <button type="submit" class="btn btn-primary">후보 추가</button>
+              </form>
+              <div id="candidate-feedback" class="alert alert-danger mt-3 d-none" role="alert"></div>
+
+              <hr />
+
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">ID</th>
+                      <th scope="col">후보(정당)</th>
+                      <th scope="col" class="text-end">작업</th>
+                    </tr>
+                  </thead>
+                  <tbody id="candidate-table-body">
+                    <tr id="candidate-empty-row">
+                      <td colspan="3" class="text-center text-muted py-3">등록된 후보가 없습니다.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </form>
-
-          <div id="form-feedback" class="alert alert-danger mt-3 d-none" role="alert"></div>
+          </section>
         </div>
-      </section>
 
-      <section class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h4 mb-0">생성된 투표지</h2>
-            <span id="ballot-count" class="badge text-bg-secondary">0개</span>
-          </div>
+        <div class="col-12 col-lg-8">
+          <div class="vstack gap-4">
+            <section class="card shadow-sm">
+              <div class="card-body">
+                <h2 class="h4 mb-3">투표지 생성</h2>
+                <p class="text-muted mb-3">1순위는 필수이며, 순위는 1부터 연속되어야 합니다. 후보는 등록 목록에서만 선택할 수 있습니다.</p>
 
-          <div class="table-responsive">
-            <table class="table table-striped align-middle mb-0">
-              <thead>
-                <tr>
-                  <th scope="col">투표지 ID</th>
-                  <th scope="col">선호도 목록</th>
-                  <th scope="col" class="text-end">작업</th>
-                </tr>
-              </thead>
-              <tbody id="ballot-table-body">
-                <tr id="empty-row">
-                  <td colspan="3" class="text-center text-muted py-4">아직 생성된 투표지가 없습니다.</td>
-                </tr>
-              </tbody>
-            </table>
+                <form id="ballot-form" novalidate>
+                  <div id="preference-list" class="vstack gap-2 mb-3"></div>
+                  <div class="d-flex gap-2">
+                    <button type="button" id="add-preference" class="btn btn-outline-secondary">선호도 추가</button>
+                    <button type="submit" class="btn btn-primary">투표지 생성</button>
+                  </div>
+                </form>
+
+                <div id="ballot-feedback" class="alert alert-danger mt-3 d-none" role="alert"></div>
+
+                <hr />
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h3 class="h5 mb-0">생성된 투표지</h3>
+                  <span id="ballot-count" class="badge text-bg-secondary">0개</span>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-striped align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th scope="col">투표지 ID</th>
+                        <th scope="col">선호도 목록</th>
+                        <th scope="col" class="text-end">작업</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ballot-table-body">
+                      <tr id="ballot-empty-row">
+                        <td colspan="3" class="text-center text-muted py-4">아직 생성된 투표지가 없습니다.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <section class="card shadow-sm">
+              <div class="card-body">
+                <h2 class="h4 mb-3">STV 1라운드 집계</h2>
+                <form id="stv-form" class="row g-2 align-items-end" novalidate>
+                  <div class="col-12 col-md-4">
+                    <label for="seat-count" class="form-label mb-1">선출 인원(의석 수)</label>
+                    <input id="seat-count" type="number" min="1" step="1" class="form-control" required />
+                  </div>
+                  <div class="col-12 col-md-8 d-grid d-md-flex">
+                    <button type="submit" class="btn btn-success">1라운드 집계 실행</button>
+                  </div>
+                </form>
+                <div id="stv-feedback" class="alert alert-danger mt-3 d-none" role="alert"></div>
+
+                <div id="stv-result" class="d-none mt-3">
+                  <div class="row g-2 mb-3">
+                    <div class="col-6 col-md-3"><div class="border rounded p-2"><small class="text-muted d-block">총 투표지</small><strong id="summary-total-ballots">0</strong></div></div>
+                    <div class="col-6 col-md-3"><div class="border rounded p-2"><small class="text-muted d-block">유효표</small><strong id="summary-valid-ballots">0</strong></div></div>
+                    <div class="col-6 col-md-3"><div class="border rounded p-2"><small class="text-muted d-block">무효표</small><strong id="summary-invalid-ballots">0</strong></div></div>
+                    <div class="col-6 col-md-3"><div class="border rounded p-2"><small class="text-muted d-block">Droop Quota</small><strong id="summary-quota">0</strong></div></div>
+                  </div>
+
+                  <div class="mb-3">
+                    <h3 class="h6 mb-1">Quota 이상 후보</h3>
+                    <ul id="quota-candidate-list" class="mb-0"></ul>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                      <thead>
+                        <tr>
+                          <th scope="col">후보</th>
+                          <th scope="col">정당</th>
+                          <th scope="col">1순위 득표</th>
+                          <th scope="col">Quota 판정</th>
+                        </tr>
+                      </thead>
+                      <tbody id="stv-tally-table-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
-      </section>
+      </div>
     </main>
   </body>
 </html>
