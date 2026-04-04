@@ -2,14 +2,14 @@
   "name": "metro-three-seat-crowded",
   "seatCount": 3,
   "candidates": [
-    { "key": "A", "name": "서윤 박", "party": "Civic Alliance" },
-    { "key": "B", "name": "민준 오", "party": "Labour Reform" },
-    { "key": "C", "name": "지후 한", "party": "Green Future" },
-    { "key": "D", "name": "하린 김", "party": "Community Voice" },
-    { "key": "E", "name": "도윤 이", "party": "Liberal Forum" },
-    { "key": "F", "name": "예린 정", "party": "Workers Network" },
-    { "key": "G", "name": "시우 최", "party": "Independent" },
-    { "key": "H", "name": "나연 강", "party": "People First" }
+    { "key": "A", "name": "크세노폰", "party": "포도당" },
+    { "key": "B", "name": "알키비아데스", "party": "과당" },
+    { "key": "C", "name": "제논", "party": "퐁당" },
+    { "key": "D", "name": "하린 김", "party": "당당" },
+    { "key": "E", "name": "피타코스", "party": "야근수당" },
+    { "key": "F", "name": "클레이스테네스", "party": "올리고당" },
+    { "key": "G", "name": "키몬", "party": "무소속" },
+    { "key": "H", "name": "히피아스", "party": "악당" }
   ],
   "ballots": [
     ["A", "C", "B", "D", "E", "F"],
@@ -79,9 +79,9 @@
   ],
   "expected": {
     "quota": 17,
-    "elected": ["서윤 박", "민준 오", "지후 한"],
+    "elected": ["크세노폰", "알키비아데스", "제논"],
     "countTypes": ["initial", "surplus", "exclusion", "exclusion", "exclusion", "exclusion"],
     "countCount": 6,
-    "excluded": ["도윤 이", "예린 정", "시우 최", "나연 강"]
+    "excluded": ["피타코스", "클레이스테네스", "키몬", "히피아스"]
   }
 }

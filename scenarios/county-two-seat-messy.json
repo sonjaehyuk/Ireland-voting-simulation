@@ -2,13 +2,13 @@
   "name": "county-two-seat-messy",
   "seatCount": 2,
   "candidates": [
-    { "key": "A", "name": "유진 백", "party": "Rural Alliance" },
-    { "key": "B", "name": "태민 남", "party": "Civic Labour" },
-    { "key": "C", "name": "소이 문", "party": "Green Rural" },
-    { "key": "D", "name": "현우 신", "party": "Independent" },
-    { "key": "E", "name": "가은 조", "party": "Liberal County" },
-    { "key": "F", "name": "준서 황", "party": "People's List" },
-    { "key": "G", "name": "채원 임", "party": "Community Action" }
+    { "key": "A", "name": "페리클레스", "party": "포도당" },
+    { "key": "B", "name": "솔론", "party": "과당" },
+    { "key": "C", "name": "알키비아데스", "party": "퐁당" },
+    { "key": "D", "name": "클레이온", "party": "당당" },
+    { "key": "E", "name": "니키아스", "party": "야근수당" },
+    { "key": "F", "name": "제논", "party": "올리고당" },
+    { "key": "G", "name": "리쿠르고스", "party": "악당" }
   ],
   "ballots": [
     ["A", "C", "B", "D", "E", "F"],
@@ -69,9 +69,9 @@
   ],
   "expected": {
     "quota": 19,
-    "elected": ["소이 문", "유진 백"],
+    "elected": ["알키비아데스", "페리클레스"],
     "countTypes": ["initial", "exclusion", "exclusion", "exclusion", "exclusion"],
     "countCount": 5,
-    "excluded": ["현우 신", "가은 조", "준서 황", "채원 임"]
+    "excluded": ["클레이온", "니키아스", "제논", "리쿠르고스"]
   }
 }
