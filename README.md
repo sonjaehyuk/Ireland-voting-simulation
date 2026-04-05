@@ -86,21 +86,21 @@
 
 아래 경로로 접속하여 벌크 시나리오 샘플 파일을 내려받으세요. 그 파일을 벌크 시나리오에 업로드하여 빠르게 STV 예시를 확인할 수 있습니다.
 
-- `/scenarios/surplus-transfer-basic.json`
+- [`/scenarios/surplus-transfer-basic.json`](/scenarios/surplus-transfer-basic.json)
   - quota를 넘긴 후보의 surplus 이양과 그 이후 count 진행을 짧게 확인하는 기본 예제
-- `/scenarios/large-surplus-changes-runner-up.json`
+- [`/scenarios/large-surplus-changes-runner-up.json`](/scenarios/large-surplus-changes-runner-up.json)
   - (**추천**) A가 매우 큰 surplus를 가진 상태에서 B와 C가 모두 이양을 받지만, 원래 뒤처져 있던 B가 역전 당선하는 예제
-- `/scenarios/finalisation-after-exclusion.json`
+- [`/scenarios/finalisation-after-exclusion.json`](/scenarios/finalisation-after-exclusion.json)
   - exclusion 이후 남은 continuing 후보 수가 잔여 의석 수와 같아져 자동 당선으로 끝나는 예제
-- `/scenarios/exhausted-ballots.json`
+- [`/scenarios/exhausted-ballots.json`](/scenarios/exhausted-ballots.json)
   - 다음 선호가 부족한 표가 exhausted votes로 떨어지는 흐름을 확인하는 예제
-- `/scenarios/tie-break-by-order.json`
+- [`/scenarios/tie-break-by-order.json`](/scenarios/tie-break-by-order.json)
   - 단순 동률에서 현재 구현의 결정론적 tie-break가 어떤 순서로 작동하는지 보는 예제
-- `/scenarios/metro-three-seat-crowded.json`
+- [`/scenarios/metro-three-seat-crowded.json`](/scenarios/metro-three-seat-crowded.json)
   - (**추천**) 3석, 8명 후보, 많은 선호 조합이 섞인 도시형 대규모 시나리오로 여러 exclusion과 늦은 당선 확정을 관찰하는 예제
-- `/scenarios/county-two-seat-messy.json`
+- [`/scenarios/county-two-seat-messy.json`](/scenarios/county-two-seat-messy.json)
   - 2석, 7명 후보, 지역 선거처럼 선호가 뒤섞인 난삽한 시나리오로 반복적인 exclusion count를 관찰하는 예제
-- `/scenarios/chained-transfer-after-exclusion.json`
+- [`/scenarios/chained-transfer-after-exclusion.json`](/scenarios/chained-transfer-after-exclusion.json)
   - (**추천**) 한 번 이동한 표가 나중에 탈락한 후보를 거쳐 다시 다음 선호 후보로 재이양되는 연쇄 이동 흐름을 보는 예제
 
 ## STV 공식과 규칙
